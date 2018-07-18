@@ -18,14 +18,42 @@ const TOTP = K => {
  * @param K be a secret key
  * @param C be a counter
  */
-const HOTP = (K, C) => {
-  const Truncate = data => data.readUInt32BE();
+const HOTP = (K, C, L = 6) => {
+  return (Truncate(HMAC(K, C)) & 0x7FFFFFFF).toString().slice(0, L);
+};
+/**
+ * Truncate
+ * @param {*} data 
+ */
+const Truncate = data => data.readUInt32BE();
+/**
+ * HMAC
+ * @param {*} K 
+ * @param {*} C 
+ */
+const HMAC = (K, C) => {
   const hmac = crypto.createHmac('sha1', K);
   hmac.update(C.toString());
-  return Truncate(hmac.digest()) & 0x7FFFFFFF;
+  return hmac.digest();
+};
+/**
+ * base-32 encoding
+ * @param {*} length 
+ */
+const generateKey = (length = 20) => {
+  let r = '';
+  do {
+    const b = crypto.randomBytes(6);
+    const h = b.toString('hex');
+    const n = parseInt(h, 16);
+    const t = n.toString(32);
+    r += t;
+  } while (r.length < length)
+  return r.slice(0, length);
 };
 
 module.exports = {
   HOTP,
-  TOTP
+  TOTP,
+  generateKey,
 };
